@@ -1,101 +1,132 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useDispatch, useSelector } from 'react-redux';
+import { Card, Typography, theme } from 'antd';
+import { withTheme } from '@rjsf/core';
+import { Theme as AntDTheme } from '@rjsf/antd';
+import validator from '@rjsf/validator-ajv8';
+import { RJSFSchema } from '@rjsf/utils';
+import JsonEditor from './components/JsonEditor';
+import { updateSchema } from '@/lib/feature/schema/schemaSlice';
+import { updateUiSchema } from '@/lib/feature/schema/uiSchemaSlice';
+import { updateTreeFromSchemas } from '@/lib/feature/schema/treeSlice';
+
+const { Title } = Typography;
+
+interface RootState {
+  schema: {
+    formSchema: {
+      type: string;
+      title: string;
+      properties: Record<string, any>;
+      required: string[];
+    };
+  };
+  uiSchema: {
+    formUiSchema: Record<string, any>;
+  };
+}
+
+// Custom theme overrides for the form
+const customTheme = {
+  ...AntDTheme,
+  widgets: {
+    ...AntDTheme.widgets,
+  },
+};
+
+
+export default function HomePage() {
+  const formSchema = useSelector((state: RootState) => state.schema.formSchema);
+  const uiSchema = useSelector((state: RootState) => state.uiSchema.formUiSchema);
+  const dispatch = useDispatch()
+  const { token } = theme.useToken();
+  const CustomForm = withTheme(customTheme);
+
+  const extraUiSchema = {
+    ...uiSchema,
+    'ui:submitButtonOptions': {
+      submitText: 'Submit Form',
+      props: {
+        size: 'large',
+        type: 'primary',
+        className: 'w-full mt-4',
+      },
+    },
+    'ui:globalOptions': {
+      classNames: 'space-y-4',
+    },
+  };
+
+  const handleSubmit = ({ formData }) => {
+    console.log('Form submitted:', formData);
+  };
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className='p-[24px] max-w-[1400px] mx-auto'>
+      <Title level={2}>Form Builder</Title>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+        <div className='space-y-6'>
+          <Card
+            title="Generated JSON Schema"
+            className='shadow-sm'
+            styles={{
+              body: {
+                maxHeight: '300px',
+                overflow: 'auto',
+                background: token.colorBgContainer,
+                borderRadius: token.borderRadiusLG,
+              }
+            }}
+          >
+            <JsonEditor value={formSchema} onChange={(data) => {
+              dispatch(updateSchema({ formSchema: data }));
+              dispatch(updateTreeFromSchemas({ schema: { ...data }, uiSchema: { ...extraUiSchema } }));
+            }} autoSize />
+          </Card>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Card
+            title="Generated UI Schema"
+            className='shadow-sm'
+            styles={{
+              body: {
+                maxHeight: '300px',
+                overflow: 'auto',
+                background: token.colorBgContainer,
+                borderRadius: token.borderRadiusLG,
+              }
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <JsonEditor value={extraUiSchema} onChange={(data) => {
+              dispatch(updateUiSchema({ uiSchema: data }));
+              dispatch(updateTreeFromSchemas({ schema: { ...formSchema }, uiSchema: { ...data } }));
+            }} autoSize />
+          </Card>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        <Card
+          title="Generated Form"
+          className='shadow-sm'
+          styles={{
+            body: {
+              background: token.colorBgContainer,
+              borderRadius: token.borderRadiusLG,
+            }
+          }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          <CustomForm
+            validator={validator}
+            schema={formSchema as RJSFSchema}
+            uiSchema={extraUiSchema as any}
+            onSubmit={handleSubmit}
+            className="ant-form-vertical"
+            formContext={{
+              labelCol: { span: 24 },
+              wrapperCol: { span: 24 },
+            }}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </Card>
+      </div>
     </div>
   );
 }
