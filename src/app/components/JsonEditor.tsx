@@ -6,12 +6,12 @@ const { TextArea } = Input;
 const shallowEqual = (objA, objB) => {
   if (objA === objB) return true;
   if (!objA || !objB) return false;
-  for (let key in objA) {
+  for (const key in objA) {
     if (objA.hasOwnProperty(key) && (!objB.hasOwnProperty(key) || objA[key] !== objB[key])) {
       return false;
     }
   }
-  for (let key in objB) {
+  for (const key in objB) {
     if (objB.hasOwnProperty(key) && !objA.hasOwnProperty(key)) {
       return false;
     }
@@ -45,13 +45,13 @@ const JsonEditor = ({ value: initialValue, onChange, ...props }) => {
       setState({ value: obj, string: value, error: null });
       onChange(obj);
     } catch (error) {
-      setState(prevState => ({ ...prevState, string: value, error }));
+      setState(prevState => ({ ...prevState, string: value, error }) as any);
     }
   };
 
   const renderErrorMessage = () => {
     if (!state.error) return null;
-    const errorMessage = state.error.toString();
+    const errorMessage = (state.error as string).toString();
     const message = (
       <a
         href="#!"
@@ -59,9 +59,9 @@ const JsonEditor = ({ value: initialValue, onChange, ...props }) => {
           const matched = /position ([0-9]+)/.exec(errorMessage);
           const position = matched ? parseInt(matched[1], 10) : -1;
           if (inputRef.current) {
-            inputRef.current.textAreaRef.selectionStart = position;
-            inputRef.current.textAreaRef.selectionEnd = position;
-            inputRef.current.textAreaRef.focus();
+            (inputRef.current as any).textAreaRef.selectionStart = position;
+            (inputRef.current as any).textAreaRef.selectionEnd = position;
+            (inputRef.current as any).textAreaRef.focus();
           }
         }}
       >

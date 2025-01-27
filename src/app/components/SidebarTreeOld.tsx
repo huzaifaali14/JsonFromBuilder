@@ -23,6 +23,7 @@ import { treeSelector, updateTreeData } from '@/lib/feature/schema/treeSlice';
 interface TreeData extends DataNode {
   key: string;
   title: string;
+  type?: string;
   children?: TreeData[];
   componentType?: string;
   required?: boolean;
@@ -140,7 +141,7 @@ const SidebarTree: React.FC = () => {
         return node;
       });
     };
-    const updatedTreeData = updateTreeDataFn(treeData, selectedNode);
+    const updatedTreeData = updateTreeDataFn(treeData, selectedNode as string);
     dispatch(updateTreeData(updatedTreeData));
     updateFormSchemas(updatedTreeData);
     setIsModalVisible(false);
@@ -325,7 +326,7 @@ const SidebarTree: React.FC = () => {
         <FieldEditor
           open={!!editingField}
           onClose={() => setEditingField(null)}
-          field={editingField}
+          field={editingField as any}
           treeData={treeData}
         />
       )}

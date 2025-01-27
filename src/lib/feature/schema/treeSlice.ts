@@ -65,7 +65,7 @@ const schemaToTreeData = (schema: Schema, uiSchema: any = {}) => {
 
     if (field.properties) {
       node.children = Object.entries(field.properties).map(([childName, childField]) =>
-        processField(childName, childField, fieldName)
+        processField(childName, childField)
       );
     }
 
@@ -74,7 +74,8 @@ const schemaToTreeData = (schema: Schema, uiSchema: any = {}) => {
 
   if (schema.properties) {
     Object.entries(schema.properties).forEach(([fieldName, field]) => {
-      treeData.push(processField(fieldName, field));
+      const d = processField(fieldName, field)
+      treeData.push(d as unknown as never);
     });
   }
 

@@ -98,7 +98,7 @@ export default function HomePage() {
             }}
           >
             <JsonEditor value={extraUiSchema} onChange={(data) => {
-              dispatch(updateUiSchema({ uiSchema: data }));
+              dispatch(updateUiSchema({ uiSchema: data } as any));
               dispatch(updateTreeFromSchemas({ schema: { ...formSchema }, uiSchema: { ...data } }));
             }} autoSize />
           </Card>
@@ -118,7 +118,7 @@ export default function HomePage() {
             validator={validator}
             schema={formSchema as RJSFSchema}
             uiSchema={extraUiSchema as any}
-            onSubmit={handleSubmit}
+            onSubmit={handleSubmit as any}
             className="ant-form-vertical"
             formContext={{
               labelCol: { span: 24 },
