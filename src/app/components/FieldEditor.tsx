@@ -1,9 +1,10 @@
-import React from 'react';
-import { Modal, Form, Input, Switch } from 'antd';
+import React, { useState } from 'react';
+import { Modal, Form, Input, Switch, Drawer, Space, Button } from 'antd';
 import { useDispatch } from 'react-redux';
 import { updateSchemaFromTreeData } from '@/lib/feature/schema/schemaSlice';
 import { updateUiSchemaFromTreeData } from '@/lib/feature/schema/uiSchemaSlice';
 import { updateTreeData } from '@/lib/feature/schema/treeSlice';
+import { debounce } from 'lodash';
 
 interface FieldEditorProps {
   open: boolean;
@@ -29,6 +30,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
 }) => {
   const [form] = Form.useForm();
   const dispatch = useDispatch();
+  const [error, setError] = useState('');
 
   const updateSchemas = (values: any) => {
     const updatedTreeData = updateTreeDataField(treeData, field.key, values);
@@ -37,11 +39,25 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
     dispatch(updateUiSchemaFromTreeData({ treeData: [...updatedTreeData] }));
   };
 
+
+  const validateKeyUniqueness = debounce((key: string, data: any[]) => {
+    for (const item of data) {
+      if (item.key === key) {
+        setError(true);
+        break;
+      }
+      if (item.children) {
+        validateKeyUniqueness(key, item.children)
+      }
+    }
+  }, 300)
+
   const updateTreeDataField = (data: any[], key: string, values: any): any[] => {
     return data.map((node) => {
       if (node.key === key) {
         return {
           ...node,
+          key: values.key,
           title: values.title,
           required: values.required,
           description: values.description,
@@ -72,6 +88,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
   React.useEffect(() => {
     if (open) {
       form.setFieldsValue({
+        key: field.key,
         title: field.title,
         required: field.required,
         placeholder: field.placeholder,
@@ -82,12 +99,21 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
   }, [open, field, form]);
 
   return (
-    <Modal
+    <Drawer
       title="Edit Field"
+      placement={'right'}
+      closable={true}
+      onClose={onClose}
       open={open}
-      onOk={handleOk}
-      onCancel={onClose}
-      width={600}
+      key={'right'}
+      extra={
+        <Space>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button disabled={!!error} type="primary" onClick={handleOk}>
+            Save
+          </Button>
+        </Space>
+      }
     >
       <Form
         form={form}
@@ -96,6 +122,20 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
           required: false,
         }}
       >
+        <Form.Item
+          label="Key"
+          name="key"
+          onChange={(e) => {
+            setError(false);
+            validateKeyUniqueness(e.target.value, treeData)
+          }}
+          validateStatus={error ? 'error' : ''}
+          help={error ? "Key need to be unique" : ''}
+          rules={[{ required: true, message: 'Please enter a key' }]}
+        >
+          <Input />
+        </Form.Item>
+
         <Form.Item
           label="Field Title"
           name="title"
@@ -120,7 +160,7 @@ const FieldEditor: React.FC<FieldEditorProps> = ({
           <Input.TextArea rows={2} />
         </Form.Item>
       </Form>
-    </Modal>
+    </Drawer>
   );
 };
 
