@@ -62,6 +62,17 @@ export default function HomePage() {
     console.log('Form submitted:', formData);
   };
 
+  const customValidateFunction = (formData, errors, uiSchema) => {
+    let updatedErrors = errors;
+    Object.values(formSchema?.properties)?.forEach((item) => {
+      if (item.customValidator) {
+        const fn = Function('return ' + item.customValidator)()
+        updatedErrors = fn(formData, errors, uiSchema)
+      }
+    })
+    return updatedErrors;
+  }
+
   return (
     <div className='p-[24px] max-w-[1400px] mx-auto'>
       <Title level={2}>Form Builder</Title>
@@ -115,6 +126,8 @@ export default function HomePage() {
           }}
         >
           <CustomForm
+            customValidate={customValidateFunction}
+            liveValidate
             validator={validator}
             schema={formSchema as RJSFSchema}
             uiSchema={extraUiSchema as any}

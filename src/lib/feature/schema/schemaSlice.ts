@@ -31,19 +31,30 @@ const initialState: SchemaState = {
   },
 };
 
-const getFieldSchema = (componentType: string, title: string, isRequired: boolean = false, description?: string): FormField => {
+interface Validation {
+  maxLength?: number;
+  minLength?: number;
+  pattern?: string;
+  minimum?: number;
+  maximum?: number;
+  required?: boolean;
+}
+
+const getFieldSchema = (componentType: string, title: string, description?: string, validation?: Validation): FormField => {
   const baseField = {
     title,
     description,
   };
 
+  const { minimum, maximum, ...rest } = validation || {};
+
   switch (componentType) {
     case 'input':
-      return { ...baseField, type: 'string' };
+      return { ...baseField, type: 'string', minimum, maximum, ...rest, };
     case 'number-input':
-      return { ...baseField, type: 'number' };
+      return { ...baseField, type: 'number', ...rest };
     case 'select':
-      return { ...baseField, type: 'string', enum: ['option1', 'option2', 'option3'] };
+      return { ...baseField, type: 'string', enum: ['option1', 'option2', 'option3'], ...rest };
     case 'checkbox':
       return {
         ...baseField,
@@ -52,21 +63,22 @@ const getFieldSchema = (componentType: string, title: string, isRequired: boolea
           type: 'string',
           enum: ['option1', 'option2', 'option3'],
         },
+        ...rest,
       };
     case 'date-picker':
-      return { ...baseField, type: 'string', format: 'date' };
+      return { ...baseField, type: 'string', format: 'date', ...rest };
     case 'switch':
-      return { ...baseField, type: 'boolean' };
+      return { ...baseField, type: 'boolean', ...rest };
     case 'slider':
-      return { ...baseField, type: 'number', minimum: 0, maximum: 100 };
+      return { ...baseField, type: 'number', minimum: 0, maximum: 100, ...rest };
     case 'upload':
-      return { ...baseField, type: 'string', format: 'binary' };
+      return { ...baseField, type: 'string', format: 'binary', ...rest };
     case 'textarea':
-      return { ...baseField, type: 'string' };
+      return { ...baseField, type: 'string', ...rest };
     case 'nestedForm':
-      return { ...baseField, type: 'object', properties: {} };
+      return { ...baseField, type: 'object', properties: {}, ...rest };
     default:
-      return { ...baseField, type: 'string' };
+      return { ...baseField, type: 'string', ...rest };
   }
 };
 
@@ -86,16 +98,17 @@ export const schemaSlice = createSlice({
       const orderedProperties = new Map<string, FormField>();
 
       const processNode = (node: any) => {
+        const { required, ...restValidation } = node.validation || {};
         if (node.componentType) {
           const fieldSchema = getFieldSchema(
             node.componentType,
             node.title,
-            node.required,
-            node.description
+            node.description,
+            restValidation
           );
           orderedProperties.set(node.key, fieldSchema);
 
-          if (node.required) {
+          if (required) {
             newSchema.required = (state.formSchema.required || [])
             newSchema.required.push(node.key);
           }

@@ -98,7 +98,6 @@ export const treeSlice = createSlice({
       return state;
     },
     updateTreeFromSchemas: (state, action: PayloadAction<{ schema: Schema; uiSchema: any }>) => {
-      debugger
       const newTreeData = schemaToTreeData(action.payload.schema, action.payload.uiSchema);
 
       const resultantStat = {
